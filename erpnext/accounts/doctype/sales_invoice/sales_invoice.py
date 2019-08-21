@@ -29,6 +29,10 @@ from erpnext.healthcare.utils import manage_invoice_submit_cancel
 
 from six import iteritems
 
+from datetime import datetime
+from datetime import timedelta
+
+
 form_grid_templates = {
 	"items": "templates/form_grid/item_grid.html"
 }
@@ -71,6 +75,7 @@ class SalesInvoice(SellingController):
 			self.indicator_title = _("Paid")
 
 	def validate(self):
+		self.validate_cai()
 		super(SalesInvoice, self).validate()
 		self.validate_auto_set_posting_time()
 
@@ -135,6 +140,61 @@ class SalesInvoice(SellingController):
 		if self.redeem_loyalty_points and self.loyalty_program and self.loyalty_points:
 			validate_loyalty_points(self, self.loyalty_points)
 
+	def number_cai(self, num):
+		if num >= 1 and num < 10:
+			return("0000000" + str(num))
+		if num >= 10 and num < 100:
+			return("000000" + str(num))
+		if num >= 100 and num < 1000:
+			return("00000" + str(num))
+		if num >= 1000 and num < 10000:
+			return("0000" + str(num))
+		if num >= 10000 and num < 100000:
+			return("000" + str(num))
+		if num >= 100000 and num < 1000000:
+			return("00" + str(num))
+		if num >= 1000000 and num < 10000000:
+			return("0" + str(num))
+		if num >= 10000000:
+			return(str(num))
+
+	def cashier_connect(self):
+		cashier = frappe.get_all("User",["email", "sucursal", "pos"], filters = {"email": "vicente.gonzalez@grintsys.com"})
+		cai = frappe.get_all("GCAI",["cai", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos})
+		return cai
+	
+	def validate_cai(self):
+		cai = self.cashier_connect()
+
+		cai_prefix = cai[0].number[0:11]
+
+		invoice_number = self.number_cai(int(cai[0].current_numbering))
+
+		numbering = "{}{}".format(cai_prefix, invoice_number)
+
+		self.cai = cai[0].cai
+
+		self.invoice_number = numbering
+
+	def cai_messages(self):
+		cai = self.cashier_connect()
+
+		now = datetime.now() 
+		days = timedelta(days=5)
+		date = now + days
+		str_date = str(date)
+		date_now = str_date[0:10]
+
+		number_remaining = int(cai[0].final_range) - int(cai[0].current_numbering)
+
+		if number_remaining <= 20:
+			frappe.msgprint("There are only {} available numbers".format(number_remaining))
+		
+		if number_remaining == 0:
+			frappe.msgprint(_("The current numbering {} exceeds the limit numbering {}".format(cai[0].current_numbering, cai[0].final_range)))
+
+		if date_now == str(cai[0].due_date):
+			frappe.msgprint(_("There are 5 days left for your billing permit to expire."))
 
 	def before_save(self):
 		set_account_for_mode_of_payment(self)
@@ -348,6 +408,7 @@ class SalesInvoice(SellingController):
 
 	def on_update(self):
 		self.set_paid_amount()
+		self.cai_messages()
 
 	def set_paid_amount(self):
 		paid_amount = 0.0
