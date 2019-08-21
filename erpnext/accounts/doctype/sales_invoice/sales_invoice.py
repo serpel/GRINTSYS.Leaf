@@ -183,7 +183,7 @@ class SalesInvoice(SellingController):
 		days = timedelta(days=5)
 		date = now + days
 		str_date = str(date)
-		date_now = str_date[0:10]
+		datenow = str_date[0:10]
 
 		number_remaining = int(cai[0].final_range) - int(cai[0].current_numbering)
 
@@ -193,7 +193,7 @@ class SalesInvoice(SellingController):
 		if number_remaining == 0:
 			frappe.msgprint(_("The current numbering {} exceeds the limit numbering {}".format(cai[0].current_numbering, cai[0].final_range)))
 
-		if date_now == str(cai[0].due_date):
+		if datenow == str(cai[0].due_date):
 			frappe.msgprint(_("There are 5 days left for your billing permit to expire."))
 
 	def before_save(self):
