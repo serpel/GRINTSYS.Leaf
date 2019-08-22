@@ -75,7 +75,7 @@ class SalesInvoice(SellingController):
 			self.indicator_title = _("Paid")
 
 	def validate(self):
-		self.validate_cai()
+		self.assign_cai()
 		super(SalesInvoice, self).validate()
 		self.validate_auto_set_posting_time()
 
@@ -158,43 +158,80 @@ class SalesInvoice(SellingController):
 		if num >= 10000000:
 			return(str(num))
 
-	def cashier_connect(self):
+	def user_connect(self):
 		cashier = frappe.get_all("User",["email", "sucursal", "pos"], filters = {"email": "vicente.gonzalez@grintsys.com"})
-		cai = frappe.get_all("GCAI",["cai", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos})
-		return cai
+		cai_list = frappe.get_all("GCAI",["cai", "name", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos})
+		return cai_list
 	
-	def validate_cai(self):
-		cai = self.cashier_connect()
+	def update_cai(self, current_numbering, name):
+		frappe.db.sql("UPDATE tabGCAI SET current_numbering=%s WHERE name='%s'"%(current_numbering, name))
+		frappe.db.commit()
 
-		cai_prefix = cai[0].number[0:11]
+	def settings(self):
+		settings = frappe.get_all("GCai Settings", ["expired_days", "expired_amount"])
+		return settings
 
-		invoice_number = self.number_cai(int(cai[0].current_numbering))
-
-		numbering = "{}{}".format(cai_prefix, invoice_number)
-
-		self.cai = cai[0].cai
-
-		self.invoice_number = numbering
-
-	def cai_messages(self):
-		cai = self.cashier_connect()
-
-		now = datetime.now() 
-		days = timedelta(days=5)
-		date = now + days
-		str_date = str(date)
-		datenow = str_date[0:10]
-
-		number_remaining = int(cai[0].final_range) - int(cai[0].current_numbering)
-
-		if number_remaining <= 20:
-			frappe.msgprint("There are only {} available numbers".format(number_remaining))
+	def validate_cai(self, name, due_date, current_numbering, final_range):
+		if str(due_date) > str(datetime.date):
+			return "The current CAI reached its deadline ({}).".format(due_date) 
 		
-		if number_remaining == 0:
-			frappe.msgprint(_("The current numbering {} exceeds the limit numbering {}".format(cai[0].current_numbering, cai[0].final_range)))
+		if current_numbering  > final_range:
+			return "The numbering of your CAI has reached its limit ({})".format(current_numbering-1)
 
-		if datenow == str(cai[0].due_date):
-			frappe.msgprint(_("There are 5 days left for your billing permit to expire."))
+		return True
+
+	def assign_cai(self):
+		cont = 1
+		cais = self.user_connect()
+
+		for cai in cais:
+
+			validate = self.validate_cai(cai.name, cai.due_date, cai.current_numbering, cai.final_range)
+
+			if validate == True:
+
+				self.cai_messages(cai.name, cai.final_range,cai.current_numbering, cai.due_date)
+
+				cai_prefix = cai.number[0:11]
+
+				invoice_number = self.number_cai(int(cai.current_numbering))
+
+				numbering = "{}{}".format(cai_prefix, invoice_number)
+
+				self.cai = cai.cai
+
+				self.invoice_number = numbering
+
+				num = int(cai.current_numbering) + 1
+
+				self.update_cai(num, cai.name)
+
+				return
+
+			elif cont == len(cais):
+				frappe.throw(_(validate))
+			
+			cont = cont + 1
+
+	def cai_messages(self, name, final_range, current_numbering, due_date):
+		settings = self.settings()
+
+		number_remaining = int(final_range) - int(current_numbering)
+
+		for setting in settings:
+
+			if number_remaining <= setting.expired_amount:
+				frappe.msgprint(_("There are only {} available numbers".format(number_remaining)))
+
+			for i in range(int(setting.expired_days + 1)):
+				now = datetime.now()
+				days = timedelta(days=i)
+				date = now + days
+				str_date = str(date)
+				datenow = str_date[0:10]
+
+				if datenow == str(due_date):
+					frappe.msgprint(_("There are {} days left for your billing permit to expire.".format(i)))
 
 	def before_save(self):
 		set_account_for_mode_of_payment(self)
@@ -408,7 +445,6 @@ class SalesInvoice(SellingController):
 
 	def on_update(self):
 		self.set_paid_amount()
-		self.cai_messages()
 
 	def set_paid_amount(self):
 		paid_amount = 0.0
