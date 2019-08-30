@@ -159,8 +159,13 @@ class SalesInvoice(SellingController):
 			return(str(num))
 
 	def user_connect(self):
-		cashier = frappe.get_all("User",["email", "sucursal", "pos"], filters = {"email": "vicente.gonzalez@grintsys.com"})
-		cai_list = frappe.get_all("GCAI",["cai", "name", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos, "state":"Valid"})
+		cashier = frappe.get_all("User", ["email", "sucursal", "pos"], filters = {"email": frappe.session.user})
+
+		if len(cashier) == 0:
+			cashier = frappe.get_all("User", ["email", "sucursal", "pos"], filters = {"name": frappe.session.user})
+
+		cai_list = frappe.get_all("GCAI", ["cai", "name", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos, "state":"Valid"})
+		frappe.msgprint(_("{}".format(cai_list)))
 		return cai_list
 	
 	def update_current_numbering(self, current_numbering, name):
@@ -168,10 +173,17 @@ class SalesInvoice(SellingController):
 		doc.current_numbering = current_numbering
 		doc.db_update()
 
-	def update_state(self, name):
-		doc = frappe.get_doc('GCAI', name)
-		doc.state = "Invalid"
-		doc.db_update()
+	def update_state(self, name, final_range):
+		newcai = frappe.get_all("GCAI", ["name"], filters = ({"initial_range": int(final_range)+1}))
+		
+		new = frappe.get_doc('GCAI', newcai[0].name)
+		new.state = "Valid"
+		new.db_update()
+
+		old = frappe.get_doc('GCAI', name)
+		old.state = "Invalid"
+		old.db_update()
+
 
 	def settings(self):
 		settings = frappe.get_all("GCai Settings", ["expired_days", "expired_amount"])
@@ -179,7 +191,7 @@ class SalesInvoice(SellingController):
 
 	def validate_cai(self, name, due_date, current_numbering, final_range):
 		if str(due_date) > str(datetime.date):
-			self.update_state(name)
+			self.update_state(name, final_range)
 			return "The current CAI reached its deadline ({}).".format(due_date)
 		
 		if current_numbering  > final_range:
@@ -245,7 +257,7 @@ class SalesInvoice(SellingController):
 					frappe.msgprint(_("There are {} days left for your billing permit to expire.".format(i)))
 			
 			if number_remaining == 0:
-				self.update_state(name)
+				self.update_state(name, final_range)
 
 	def before_save(self):
 		set_account_for_mode_of_payment(self)
