@@ -11,6 +11,10 @@
   "details",
   "company_name",
   "abbr",
+  "rtn",
+  "address",
+  "email",
+  "telefono",
   "change_abbr",
   "is_group",
   "cb0",
@@ -90,7 +94,6 @@
   "date_of_commencement",
   "phone_no",
   "fax",
-  "email",
   "website",
   "column_break1",
   "company_description",
@@ -720,12 +723,27 @@
    "fieldtype": "Link",
    "label": "Default Buying Terms",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "rtn",
+   "fieldtype": "Data",
+   "label": "RTN"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "telefono",
+   "fieldtype": "Data",
+   "label": "Tel."
   }
  ],
  "icon": "fa fa-building",
  "idx": 1,
  "image_field": "company_logo",
- "modified": "2019-07-04 22:20:45.104307",
+ "modified": "2019-09-04 15:09:08.435019",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Company",

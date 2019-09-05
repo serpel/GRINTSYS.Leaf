@@ -76,6 +76,7 @@ class SalesInvoice(SellingController):
 
 	def validate(self):
 		self.assign_cai()
+		self.assign_data_company()
 		super(SalesInvoice, self).validate()
 		self.validate_auto_set_posting_time()
 
@@ -159,13 +160,15 @@ class SalesInvoice(SellingController):
 			return(str(num))
 
 	def user_connect(self):
-		cashier = frappe.get_all("User", ["email", "sucursal", "pos"], filters = {"email": frappe.session.user})
+		cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos"], filters = {"user": frappe.session.user})
 
 		if len(cashier) == 0:
-			cashier = frappe.get_all("User", ["email", "sucursal", "pos"], filters = {"name": frappe.session.user})
+			cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos"], filters = {"user": frappe.session.user})
 
-		cai_list = frappe.get_all("GCAI", ["cai", "name", "number", "current_numbering", "due_date" ,"final_range"], filters = {"sucursal": cashier[0].sucursal, "pos_name": cashier[0].pos, "state":"Valid"})
-		frappe.msgprint(_("{}".format(cai_list)))
+		cai_list = frappe.get_all("GCAI", ["cai", "name", "number", "current_numbering", "due_date" ,"final_range", "pos_name", "sucursal", "initial_range"], filters = {"sucursal": cashier[0].branch, "pos_name": cashier[0].pos, "state":"Valid"})
+		
+		self.pos = cashier[0].pos
+
 		return cai_list
 	
 	def update_current_numbering(self, current_numbering, name):
@@ -173,25 +176,34 @@ class SalesInvoice(SellingController):
 		doc.current_numbering = current_numbering
 		doc.db_update()
 
-	def update_state(self, name, final_range):
-		newcai = frappe.get_all("GCAI", ["name"], filters = ({"initial_range": int(final_range)+1}))
+	def update_state(self, name, final_range, pos, sucursal):
+		newcai = frappe.get_all("GCAI", ["name"], filters = ({"pos_name":pos, "sucursal":sucursal, "initial_range": int(final_range)+1}))
 		
-		new = frappe.get_doc('GCAI', newcai[0].name)
-		new.state = "Valid"
-		new.db_update()
+		if len(newcai) != 0:
+			new = frappe.get_doc('GCAI', newcai[0].name)
+			new.state = "Valid"
+			new.db_update()
 
 		old = frappe.get_doc('GCAI', name)
 		old.state = "Invalid"
 		old.db_update()
+	
+	def assign_data_company(self):
+		company = frappe.get_all("Company", ["rtn", "address", "email", "telefono"])
+
+		self.rtn = company[0].rtn
+		self.address = company[0].address
+		self.email = company[0].email
+		self.telefono = company[0].telefono
 
 
 	def settings(self):
 		settings = frappe.get_all("GCai Settings", ["expired_days", "expired_amount"])
 		return settings
 
-	def validate_cai(self, name, due_date, current_numbering, final_range):
+	def validate_cai(self, name, due_date, current_numbering, final_range, pos, sucursal):
 		if str(due_date) > str(datetime.date):
-			self.update_state(name, final_range)
+			self.update_state(name, final_range, pos, sucursal)
 			return "The current CAI reached its deadline ({}).".format(due_date)
 		
 		if current_numbering  > final_range:
@@ -209,25 +221,30 @@ class SalesInvoice(SellingController):
 
 		for cai in cais:
 
-			validate = self.validate_cai(cai.name, cai.due_date, cai.current_numbering, cai.final_range)
+			validate = self.validate_cai(cai.name, cai.due_date, cai.current_numbering, cai.final_range, cai.pos_name, cai.sucursal)
 
 			if validate == True:
 
-				self.cai_messages(cai.name, cai.final_range,cai.current_numbering, cai.due_date)
+				self.cai_messages(cai.name, cai.final_range,cai.current_numbering, cai.due_date, cai.pos_name, cai.sucursal)
 
 				cai_prefix = cai.number[0:11]
 
 				invoice_number = self.number_cai(int(cai.current_numbering))
 
-				numbering = "{}{}".format(cai_prefix, invoice_number)
+				initial_number = self.number_cai(int(cai.initial_range))
+
+				final_number = self.number_cai(int(cai.final_range))
+
+				self.invoice_number = "{}{}".format(cai_prefix, invoice_number)
+
+				self.billing_range = "{} - {}".format(initial_number, final_number)
 
 				self.cai = cai.cai
 
-				self.invoice_number = numbering
+				if int(cai.current_numbering) < int(cai.final_range):
+					num = int(cai.current_numbering) + 1
 
-				num = int(cai.current_numbering) + 1
-
-				self.update_current_numbering(num, cai.name)
+					self.update_current_numbering(num, cai.name)
 
 				return
 
@@ -236,7 +253,7 @@ class SalesInvoice(SellingController):
 			
 			cont = cont + 1
 
-	def cai_messages(self, name, final_range, current_numbering, due_date):
+	def cai_messages(self, name, final_range, current_numbering, due_date, pos, sucursal):
 		settings = self.settings()
 
 		number_remaining = int(final_range) - int(current_numbering)
@@ -257,7 +274,7 @@ class SalesInvoice(SellingController):
 					frappe.msgprint(_("There are {} days left for your billing permit to expire.".format(i)))
 			
 			if number_remaining == 0:
-				self.update_state(name, final_range)
+				self.update_state(name, final_range, pos, sucursal)
 
 	def before_save(self):
 		set_account_for_mode_of_payment(self)

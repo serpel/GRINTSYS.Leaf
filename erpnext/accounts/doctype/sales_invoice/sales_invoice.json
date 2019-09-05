@@ -6,6 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "customer_section",
+  "pos",
+  "rtn",
   "cai",
   "invoice_number",
   "title",
@@ -19,6 +21,10 @@
   "is_return",
   "column_break1",
   "company",
+  "email",
+  "address",
+  "telefono",
+  "billing_range",
   "posting_date",
   "posting_time",
   "set_posting_time",
@@ -1574,12 +1580,42 @@
    "fieldname": "invoice_number",
    "fieldtype": "Read Only",
    "label": "Invoice Number"
+  },
+  {
+   "fieldname": "pos",
+   "fieldtype": "Read Only",
+   "label": "Pos"
+  },
+  {
+   "fieldname": "rtn",
+   "fieldtype": "Read Only",
+   "label": "RTN"
+  },
+  {
+   "fieldname": "billing_range",
+   "fieldtype": "Read Only",
+   "label": " billing range"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Read Only",
+   "label": "Address"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Read Only",
+   "label": "Email"
+  },
+  {
+   "fieldname": "telefono",
+   "fieldtype": "Read Only",
+   "label": "Tel."
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2019-08-30 14:23:18.426854",
+ "modified": "2019-09-04 16:19:26.930406",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
