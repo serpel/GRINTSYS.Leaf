@@ -160,10 +160,10 @@ class SalesInvoice(SellingController):
 			return(str(num))
 
 	def user_connect(self):
-		cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos"], filters = {"user": frappe.session.user})
+		cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos", "company"], filters = {"user": frappe.session.user, "company": self.company})
 
 		if len(cashier) == 0:
-			cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos"], filters = {"user": frappe.session.user})
+			cashier = frappe.get_all("GCAI Allocation", ["user", "branch", "pos", "company"], filters = {"user": frappe.session.user, "company": self.company})
 
 		cai_list = frappe.get_all("GCAI", ["cai", "name", "number", "current_numbering", "due_date" ,"final_range", "pos_name", "sucursal", "initial_range"], filters = {"sucursal": cashier[0].branch, "pos_name": cashier[0].pos, "state":"Valid"})
 		
@@ -189,7 +189,7 @@ class SalesInvoice(SellingController):
 		old.db_update()
 	
 	def assign_data_company(self):
-		company = frappe.get_all("Company", ["rtn", "address", "email", "telefono"])
+		company = frappe.get_all("Company", ["rtn", "address", "email", "telefono"], filters = {"name": self.company})
 
 		self.rtn = company[0].rtn
 		self.address = company[0].address

@@ -10,6 +10,7 @@
   "rtn",
   "cai",
   "invoice_number",
+  "company",
   "title",
   "naming_series",
   "customer",
@@ -20,7 +21,6 @@
   "offline_pos_name",
   "is_return",
   "column_break1",
-  "company",
   "email",
   "address",
   "telefono",
@@ -302,13 +302,8 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Company",
-   "oldfieldname": "company",
-   "oldfieldtype": "Link",
    "options": "Company",
-   "print_hide": 1,
-   "remember_last_selected_value": 1,
    "reqd": 1
   },
   {
@@ -1615,7 +1610,7 @@
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2019-09-04 16:19:26.930406",
+ "modified": "2019-09-05 11:32:43.648325",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
