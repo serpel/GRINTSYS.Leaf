@@ -31,8 +31,11 @@ def execute(filters=None):
 
 		# for e in earning_types:
 		# 	row.append(e.)
+		# Sal Slip/HR-EMP-00044/00001
+		split = ss.name.split("/")
+		name = split[1]
 
-		Employee = frappe.get_all("Salary Structure Assignment", ["employee", "employee_name", "base"], filters = {"employee_name": ss.employee_name})
+		Employee = frappe.get_all("Salary Structure Assignment", ["name", "employee", "employee_name", "base"], filters = {"employee": name})
 		
 		row += [Employee[0].base, ss.gross_pay]
 
