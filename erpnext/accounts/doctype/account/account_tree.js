@@ -123,7 +123,7 @@ frappe.treeview_settings["Account"] = {
 		if(frappe.boot.user.can_read.indexOf("GL Entry") !== -1){
 
 			// show Dr if positive since balance is calculated as debit - credit else show Cr
-			let dr_or_cr = node.data.balance_in_account_currency > 0 ? "Dr": "Cr";
+			// let dr_or_cr = node.data.balance_in_account_currency > 0 ? "Dr": "Cr";
 
 			if (node.data && node.data.balance!==undefined) {
 				$('<span class="balance-area pull-right text-muted small">'
@@ -131,7 +131,7 @@ frappe.treeview_settings["Account"] = {
 						(format_currency(Math.abs(node.data.balance_in_account_currency),
 							node.data.account_currency) + " / ") : "")
 					+ format_currency(Math.abs(node.data.balance), node.data.company_currency)
-					+ " " + dr_or_cr
+					// + " " + dr_or_cr
 					+ '</span>').insertBefore(node.$ul);
 			}
 		}
