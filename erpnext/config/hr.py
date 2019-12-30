@@ -179,6 +179,11 @@ def get_data():
 					"dependencies": ["Employee"]
 				},
 				{
+					"type": "doctype",
+					"name": "Assignment Deductions",
+					"dependencies": ["Payroll Entry"]
+				},
+				{
 					"type": "report",
 					"is_query_report": True,
 					"name": "Salary Register",
