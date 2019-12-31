@@ -10,7 +10,8 @@
   "type",
   "salary_component",
   "employees",
-  "amended_from"
+  "amended_from",
+  "status"
  ],
  "fields": [
   {
@@ -54,11 +55,18 @@
    "label": "Type",
    "options": "Earning\nDeduction",
    "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Cancelled\nSaved\nFinished",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2019-12-27 13:30:43.787530",
+ "modified": "2019-12-30 16:13:07.178947",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Assignment Salary Component",
