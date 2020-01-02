@@ -25,11 +25,20 @@ class AssignmentSalaryComponent(Document):
 			self.status = "Cancelled"
 	
 	def validate_assignment_Salary_Component(self):
+		type_component = ""
+		if self.type == "Earning":
+			type_component = "earnings"
+		elif self.type == "Deduction":
+			type_component = "deductions"
+
 		employees = frappe.get_all("Employee Detail Salary Component", ["employee","moneda", "parent"], filters = {"parent": self.name})
+		
 		for item in employees:
 			salary_slip = frappe.get_all("Salary Slip", ["name"], filters={"payroll_entry":self.payroll_entry, "employee":item.employee})
-			salary_detail = frappe.get_all("Salary Detail", ["name", "parent"])
-			salary_component = {'salary_component':self.salary_component, 'type':self.type, 'amount':item.amount}
-			frappe.throw("{} {}".format(salary_detail, salary_component))
-			# for salary in salary_slip:
-			# 	frappe.db.sql("""INSERT INTO tabSalary Detail (salary_component, parent) VALUES ({},{})""".format(salary_component, salary.name)
+			
+			for salary in salary_slip:
+				doc = frappe.get_doc("Salary Slip", salary.name)
+				row = doc.append(type_component, {})
+				row.salary_component = self.salary_component
+				row.amount = item.moneda
+				doc.save()
