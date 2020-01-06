@@ -180,7 +180,7 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "Assignment Deductions",
+					"name": "Assignment Salary Component",
 					"dependencies": ["Payroll Entry"]
 				},
 				{
