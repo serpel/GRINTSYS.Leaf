@@ -50,6 +50,13 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
+					"name": "Material Request Details",
+					"reference_doctype": "Material Request",
+					"onboard": 1
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
 					"name": "Stock Balance",
 					"doctype": "Stock Ledger Entry",
 					"onboard": 1,
