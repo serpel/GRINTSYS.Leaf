@@ -516,7 +516,8 @@ def create_salary_slips_for_employees(employees, args, publish_progress=True):
 
 	payroll_entry = frappe.get_doc("Payroll Entry", args.payroll_entry)
 	payroll_entry.db_set("salary_slips_created", 1)
-	payroll_entry.notify_update()
+	#payroll_entry.notify_update()
+	payroll_entry.reload()
 
 def get_existing_salary_slips(employees, args):
 	return frappe.db.sql_list("""
