@@ -14,10 +14,12 @@ def execute(self,filters=None):
 	]	
 	data = []
 	RequestMaterial = frappe.get_all("Material Request Item", "item_code", filters = {"parent": self.naming_series})
+
 	for item in RequestMaterial:
-		ItemPrice = frappe.get_all("Item Price", ["item_code", "item_description", "price_list", "price_list_rate"], filters = {"item_code": item.item_code})
+		ItemPrice = frappe.get_all("Item Price", ["item_code", "item_description", "price_list", "price_list_rate"], filters = {"item_code": item.item_code})		
+
 		for price in ItemPrice:
-			PriceList = price.item_description
 			row = [price.item_code, price.item_description, price.price_list, price.price_list_rate]
 			data.append(row)
+
 	return columns, data
